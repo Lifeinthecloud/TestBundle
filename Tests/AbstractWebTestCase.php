@@ -8,7 +8,6 @@
 
 namespace LITC\TestBundle\Tests;
 
-use LITC\Model\Entity\User;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Bundle\FrameworkBundle\Client;
 use Symfony\Component\HttpFoundation\Session\Session;
@@ -24,9 +23,9 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
  */
 abstract class AbstractWebTestCase extends WebTestCase
 {
-    const CONTENT_TYPE_HTML = 'text/html; charset=UTF-8';
-    const CONTENT_TYPE_XML  = 'text/xml; charset=UTF-8';
-    const CONTENT_TYPE_JSON = 'application/json; charset=UTF-8';
+    const CONTENT_TYPE_HTML = 'text/html';
+    const CONTENT_TYPE_XML  = 'text/xml';
+    const CONTENT_TYPE_JSON = 'application/json';
 
     const STATUS_CODE_SUCCESS   = 200;
     const STATUS_CODE_REDIRECT  = 302;
@@ -86,7 +85,7 @@ abstract class AbstractWebTestCase extends WebTestCase
 
         // Set user in session
         $container->get('session')->set('_security_' . $firewallName,
-        serialize($container->get('security.context')->getToken()));
+            serialize($container->get('security.context')->getToken()));
         $container->get('session')->save();
 
         // Set user in cookie
@@ -99,15 +98,18 @@ abstract class AbstractWebTestCase extends WebTestCase
      *
      * @param $contentType
      */
-    protected function assertSuccessResponse($contentType, $statusCode=self::STATUS_CODE_SUCCESS)
+    protected function assertSuccessResponse($contentTypeExpected, $statusCode=self::STATUS_CODE_SUCCESS)
     {
-        $this->assertTrue(
-            $this->client->getResponse()->headers->contains(
-                'Content-Type',
-                $contentType
-            )
-        );
+        $aContentTypeResponse = explode('; ', $this->client->getResponse()->headers->get('Content-Type'));
 
+        $bSuccessResponse = false;
+        foreach($aContentTypeResponse as $contentTypeResponse) {
+            if($contentTypeResponse == $contentTypeExpected) {
+                $bSuccessResponse = true;
+            }
+        }
+
+        $this->assertTrue($bSuccessResponse);
         $this->assertCodeResponse($statusCode);
     }
 
@@ -185,6 +187,39 @@ abstract class AbstractWebTestCase extends WebTestCase
     }
 
     /**
+     * TODO à documenter
+     */
+    protected function assertJsonResponse($statusCode=self::STATUS_CODE_SUCCESS)
+    {
+        $this->assertSuccessResponse(self::CONTENT_TYPE_JSON, $statusCode);
+
+        // Test si le json est valide
+        $content = $this->client->getResponse()->getContent();
+        $decode = json_decode($content);
+        $this->assertTrue(
+            ($decode != null && $decode != false),
+            'json valide : [' . $content . ']'
+        );
+    }
+
+    /**
+     * TODO à documenter
+     */
+    protected function assertXmlResponse($statusCode=self::STATUS_CODE_SUCCESS)
+    {
+        $this->assertSuccessResponse(self::CONTENT_TYPE_XML, $statusCode);
+
+        // Test si le xml est valide
+        $xml = new \XMLReader();
+        $this->assertTrue(
+            $xml->xml(
+                $this->client->getResponse()->getContent(),
+                null,
+                LIBXML_DTDVALID
+            ));
+    }
+
+    /**
      * Get route from configuration
      *
      * @var string $routeName   Route name
@@ -223,37 +258,6 @@ abstract class AbstractWebTestCase extends WebTestCase
         );
         die;
     }
-	
-	/**
-	* TODO à documenter
-	*/
-	protected function assertJsonResponse($statusCode=self::STATUS_CODE_SUCCESS)
-    {
-        $this->assertSuccessResponse('application/json', $statusCode);
 
-        // Test si le json est valide
-        $content = $this->client->getResponse()->getContent();
-        $decode = json_decode($content);
-        $this->assertTrue(
-            ($decode != null && $decode != false),
-            'json valide : [' . $content . ']'
-        );
-    }
-    
-	/**
-	* TODO à documenter
-	*/
-    protected function assertXmlResponse($statusCode=self::STATUS_CODE_SUCCESS)
-	{
-        parent::assertXmlResponse($statusCode);
-        
-        // Test si le xml est valide
-        $xml = new \XMLReader();
-        $this->assertTrue(
-            $xml->xml(
-                $this->client->getResponse()->getContent(),
-                null,
-                LIBXML_DTDVALID
-        ));
-    }
+
 }
