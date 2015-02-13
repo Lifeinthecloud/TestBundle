@@ -185,22 +185,6 @@ abstract class AbstractWebTestCase extends WebTestCase
     }
 
     /**
-     * Testes the main assertions xml
-     */
-    protected function assertXmlResponse($statusCode=self::STATUS_CODE_SUCCESS)
-    {
-        $this->assertSuccessResponse(self::CONTENT_TYPE_XML, $statusCode);
-    }
-
-    /**
-     * Testes the main assertions json
-     */
-    protected function assertJsonResponse($statusCode=self::STATUS_CODE_SUCCESS)
-    {
-        $this->assertSuccessResponse(self::CONTENT_TYPE_JSON, $statusCode);
-    }
-
-    /**
      * Get route from configuration
      *
      * @var string $routeName   Route name
