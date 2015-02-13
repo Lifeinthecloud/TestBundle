@@ -239,4 +239,37 @@ abstract class AbstractWebTestCase extends WebTestCase
         );
         die;
     }
+	
+	/**
+	* TODO à documenter
+	*/
+	protected function assertJsonResponse($statusCode=self::STATUS_CODE_SUCCESS)
+    {
+        $this->assertSuccessResponse('application/json', $statusCode);
+
+        // Test si le json est valide
+        $content = $this->client->getResponse()->getContent();
+        $decode = json_decode($content);
+        $this->assertTrue(
+            ($decode != null && $decode != false),
+            'json valide : [' . $content . ']'
+        );
+    }
+    
+	/**
+	* TODO à documenter
+	*/
+    protected function assertXmlResponse($statusCode=self::STATUS_CODE_SUCCESS)
+	{
+        parent::assertXmlResponse($statusCode);
+        
+        // Test si le xml est valide
+        $xml = new \XMLReader();
+        $this->assertTrue(
+            $xml->xml(
+                $this->client->getResponse()->getContent(),
+                null,
+                LIBXML_DTDVALID
+        ));
+    }
 }
